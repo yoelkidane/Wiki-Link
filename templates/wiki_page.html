@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title | replace('_', ' ') }} - Wikipedia Game{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='wikipage_style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='win.css') }}">
+{% endblock %}
+
+{% block content %}
+<nav id="navbar">
+  <div class="nav-left">
+    <button id="home-link">Home</button>
+  </div>
+
+  <div class="nav-center">
+      <button id="back-link" {% if disable_back %}disabled class="disabled"{% endif %}>Back</button>
+    <span id="target-summary">Target: {{ target | replace('_', ' ') }}</span>
+    <button id="summary-button">Summary ▼</button>
+    <div id="summary-dropdown">{{ target_summary }}</div>
+  </div>
+
+  <div class="nav-right">
+    <span id="click-counter">Clicks: {{ clicks }}</span> |
+    <span id="timer">Time: 0s</span>
+  </div>
+</nav>
+
+<!-- Padding to avoid overlap with fixed navbar -->
+<div id="page-content">
+  <h2>{{ title | replace('_', ' ') }}</h2>
+  <div id="wiki-content">{{ content | safe }}</div>
+</div>
+
+<div id="win-popup" class="win-popup hidden">
+  <div class="win-popup-content">
+    <h2>🎉 You Win!</h2>
+    <p id="win-article"></p>
+    <p id="win-clicks"></p>
+    <p id="win-time"></p>
+    <button id="win-home">Go Home</button>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+  window.sessionStartTime = "{{ session['start_time'] | tojson }}";
+</script>
+{% endblock %}
