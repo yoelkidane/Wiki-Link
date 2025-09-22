@@ -1,9 +1,93 @@
 {% extends "layout.html" %}
 
-{% block title %}Wikipedia Game - Home{% endblock %}
+{% block title %}Wiki-Link - Home{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='homepage.css') }}">
+{% endblock %}
 
 {% block content %}
-  <h1>Welcome to the Wikipedia Game</h1>
-  <p>Navigate from a random start article to a random target article using only Wikipedia links.</p>
-  <button id="start-game">Start Game</button>
+  <div class="home-container">
+    <h1>Welcome to the Wiki-Link!</h1>
+    <h3 class="main-subtitle">A Wikipedia Navigation Challenge</h3>
+    <p class="subtitle">Start at one article, reach another, using only the links within Wikipedia. How direct can your path be?</p>
+
+    <!-- Brief explanation -->
+    <div class="game-description">
+      <p>Pick some rules to customize your challenge! Hover over the <strong>?</strong> icons for more info.</p>
+    </div>
+
+    <!-- Rules Section -->
+    <div class="rules-box">
+      <h3>Rules</h3>
+      <ul>
+        <li>
+          Back Button:
+          <div class="rule-group" data-rule="back_rule">
+            <span class="rule-option active" data-value="unlimited">Unlimited</span>
+            <span class="rule-option" data-value="once">Once</span>
+            <span class="rule-option" data-value="disabled">Disabled</span>
+          </div>
+          <span class="tooltip">?
+            <span class="tooltiptext">
+              Unlimited: Use back as many times as you like.<br>
+              Once: You can press back once.<br>
+              Disabled: No going back.
+            </span>
+          </span>
+        </li>
+        <li>
+          Show Table of Contents:
+          <div class="rule-group" data-rule="toc">
+            <span class="rule-option" data-value="off">Off</span>
+            <span class="rule-option active" data-value="on">On</span>
+          </div>
+          <span class="tooltip">?
+            <span class="tooltiptext">A sidebar with the page sections to help navigate large articles.</span>
+          </span>
+        </li>
+        <li>
+          Article Randomness:
+          <div class="rule-group" data-rule="difficulty">
+            <span class="rule-option active" data-value="easy">Easy</span>
+            <span class="rule-option" data-value="hard">Hard</span>
+          </div>
+          <span class="tooltip">?
+            <span class="tooltiptext">Easy: Chosen are from a pool of frequently visited articles.<br>Hard: Fully random articles from anywhere on Wikipedia.</span>
+          </span>
+        </li>
+        <li>
+          Peek Button:
+          <div class="rule-group" data-rule="peek_rule">
+            <span class="rule-option" data-value="off">Off</span>
+            <span class="rule-option active" data-value="on">On</span>
+          </div>
+          <span class="tooltip">?
+            <span class="tooltiptext">Unsure of what the target article is?<br>Click peek to view the article while playing.</span>
+          </span>
+      </ul>
+    </div>
+
+    <div class="button-container">
+      <button id="start-game">Start Game</button>
+      <button id="share-link">Generate Share Link</button>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-popup" class="modal hidden">
+      <div class="modal-content">
+        <h2>🔗 Share this Game</h2>
+        <p>Send this link to a friend so they can view the rules and start the game themselves.</p>
+      
+        <span id="copy-confirmation" class="copy-confirmation hidden">✅ Link copied!</span>
+      
+        <div class="share-actions">
+          <button id="copy-link">Copy Again</button>
+        </div>
+      
+        <button id="share-start" data-token="">Start Game</button>
+        <button class="close-share" onclick="document.getElementById('share-popup').classList.add('hidden')">Close</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}

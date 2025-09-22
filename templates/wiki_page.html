@@ -1,24 +1,31 @@
 {% extends "layout.html" %}
 
-{% block title %}{{ title | replace('_', ' ') }} - Wikipedia Game{% endblock %}
+{% block title %}Wiki-Link: {{ title | replace('_', ' ') }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='wikipage_style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='win.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='toast.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='peek.css') }}">
 {% endblock %}
 
 {% block content %}
+
+{% if not peek_mode %}
 <nav id="navbar">
   <div class="nav-left">
     <button id="home-link">Home</button>
   </div>
 
   <div class="nav-center">
-      <button id="back-link" {% if disable_back %}disabled class="disabled"{% endif %}>Back</button>
+    <button id="back-link" class="disabled" disabled>Back</button>
     <span id="target-summary">Target: {{ target | replace('_', ' ') }}</span>
     <button id="summary-button">Summary ▼</button>
     <div id="summary-dropdown">{{ target_summary }}</div>
+    {% if session['peek_rule'] == 'on' %}
+      <button id="peek-btn">Peek</button>
+    {% endif %}
   </div>
 
   <div class="nav-right">
@@ -26,25 +33,60 @@
     <span id="timer">Time: 0s</span>
   </div>
 </nav>
+{% endif %}
 
-<!-- Padding to avoid overlap with fixed navbar -->
 <div id="page-content">
-  <h2>{{ title | replace('_', ' ') }}</h2>
+  <h2 id="top">{{ title | replace('_', ' ') }}</h2>
+
+  {% if session['toc'] == 'on' and toc %}
+  <aside id="toc-sidebar">
+    <h3>Table of Contents</h3>
+    <ul>
+      <li><a href="#top">Top of page</a></li>
+      {% for item in toc %}
+        <li><a href="#{{ item.id }}">{{ item.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+  {% endif %}
+
   <div id="wiki-content">{{ content | safe }}</div>
+
+  <script>
+    window.tocItems = "{{ toc | tojson }}";
+    console.log("DEBUG: TOC items from server:", window.tocItems);
+  </script>
 </div>
 
+<!-- Win Popup -->
 <div id="win-popup" class="win-popup hidden">
   <div class="win-popup-content">
-    <h2>🎉 You Win!</h2>
+    <h2 class="win-title">🎉 You Win!</h2>
     <p id="win-article"></p>
     <p id="win-clicks"></p>
     <p id="win-time"></p>
+    <h3>Your Path:</h3>
+    <ul id="win-path" class="win-path-list"></ul>
     <button id="win-home">Go Home</button>
   </div>
 </div>
 
+<!-- Peek -->
+<div id="peekModal" class="modal">
+  <div class="modal-content">
+    <span id="peekClose" class="close">&times;</span>
+    <div id="peekContent"></div>
+  </div>
+</div>
+
+
+<script>
+  window.targetArticle = "{{ target }}";
+</script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 <script>
   window.sessionStartTime = "{{ session['start_time'] | tojson }}";
 </script>
+
+
 {% endblock %}

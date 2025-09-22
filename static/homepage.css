@@ -1,0 +1,272 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  color: #333;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 60px;
+  font-size: 2.5rem;
+  color: #222;
+}
+
+.main-subtitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #333;
+  margin: 0.5rem 0 1rem 0;
+  text-align: center;
+}
+
+p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+}
+
+.home-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.subtitle {
+  font-size: 1.4rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.game-description {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  background-color: #eef5f2;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: #333;
+}
+
+.button-container {
+  margin-bottom: 50px;
+}
+
+button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  font-size: 1rem;
+  margin: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-weight: bold;
+  text-transform: uppercase;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+button:hover {
+  background-color: #45a049;
+  transform: translateY(-3px) scale(1.05);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+#copy-link,
+#share-start,
+.modal-content button[onclick] {
+  width: 100%;
+  margin: 5px 0;
+  padding: 10px;
+  font-size: 1rem;
+}
+
+#copy-link {
+  background-color: #2196f3;
+}
+
+#copy-link:hover {
+  background-color: #1976d2;
+  transform: translateY(-3px) scale(1.05);
+}
+
+#share-start {
+  background-color: #ff9800;
+}
+
+#share-start:hover {
+  background-color: #fb8c00;
+  transform: translateY(-3px) scale(1.05);
+}
+
+.modal-content button[onclick] {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal-content button[onclick]:hover {
+  background-color: #cfcfcf;
+  transform: translateY(-2px);
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  font-size: 1.8rem;
+}
+
+.modal-content p {
+  font-size: 1rem;
+  margin: 15px 0 25px 0;
+}
+
+#share-url {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.rules-box {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.rules-box h3 {
+  margin-top: 0;
+  color: #222;
+}
+
+.rules-box ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.rules-box li {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.rule-group {
+  margin-top: 8px;
+  display: inline-flex;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.rule-option {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.rule-option:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px) scale(1.05);
+}
+
+.rule-option.active {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+  transform: translateY(-2px) scale(1.05);
+}
+
+.tooltip {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 20px;
+  margin-left: 5px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 300px; /* Increased width */
+  background-color: #555;
+  color: #fff;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -140px; /* Adjusted for new width */
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.95rem;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (max-width: 500px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .modal-content {
+    padding: 20px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+  }
+
+  .rule-option {
+    padding: 5px 10px;
+    font-size: 0.95rem;
+  }
+}

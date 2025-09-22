@@ -34,9 +34,12 @@
 }
 
 .nav-center {
-    position: relative;
-    justify-content: center;
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
     text-align: center;
 }
 
@@ -109,4 +112,23 @@ button.disabled {
   cursor: not-allowed;
   opacity: 0.6;
   pointer-events: none;
+}
+
+#peek-btn {
+    background-color: #28a745;  
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#peek-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+#peek-btn:active {
+    transform: translateY(0);
 }

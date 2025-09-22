@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}Wiki-Link - Friend Game{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='friendhomepage.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="home-container">
+  <h1>Welcome to the Wiki-Link!</h1>
+  <h3 class="main-subtitle">A Wikipedia Navigation Challenge</h3>
+  <p class="subtitle">Start at one article, reach another, using only the links within Wikipedia. How direct can your path be?</p>
+
+  <p class="friend-banner"><br>🎮 Friend Game Mode</p>
+
+  <div class="game-description">
+    <p>This game was shared with you by a friend. Race your friend to the target article while following the rules they picked!</p>
+  </div>
+
+  <!-- Rules Section -->
+  <div class="rules-box">
+    <h3>Rules</h3>
+    <ul>
+      <li>
+        Back Button:
+        <div class="rule-group" data-rule="back_rule">
+          <span class="rule-option {% if back_rule == 'unlimited' %}active{% endif %}">Unlimited</span>
+          <span class="rule-option {% if back_rule == 'once' %}active{% endif %}">Once</span>
+          <span class="rule-option {% if back_rule == 'disabled' %}active{% endif %}">Disabled</span>
+        </div>
+        <span class="tooltip">?
+          <span class="tooltiptext">
+            Unlimited: Use back as many times as you like.<br>
+            Once: Only one back allowed.<br>
+            Disabled: Cannot use back.
+          </span>
+        </span>
+      </li>
+      <li>
+        Show Table of Contents:
+        <div class="rule-group" data-rule="toc">
+          <span class="rule-option {% if toc == 'off' %}active{% endif %}">Off</span>
+          <span class="rule-option {% if toc == 'on' %}active{% endif %}">On</span>
+        </div>
+        <span class="tooltip">?
+          <span class="tooltiptext">TOC displays a sidebar with the page sections to help navigate large articles.</span>
+        </span>
+      </li>
+      <li>
+        Article Randomness:
+        <div class="rule-group" data-rule="difficulty">
+          <span class="rule-option {% if difficulty == 'easy' %}active{% endif %}">Easy</span>
+          <span class="rule-option {% if difficulty == 'hard' %}active{% endif %}">Hard</span>
+        </div>
+        <span class="tooltip">?
+          <span class="tooltiptext">Easy: Pick articles from a curated list.<br>Hard: Fully random articles.</span>
+        </span>
+      </li>
+      <li>
+        Peek Button:
+        <div class="rule-group" data-rule="peek_rule">
+          <span class="rule-option {% if peek_rule == 'off' %}active{% endif %}">Off</span>
+          <span class="rule-option {% if peek_rule == 'on' %}active{% endif %}">On</span>
+        </div>
+        <span class="tooltip">?
+          <span class="tooltiptext">Peek allows you to see the first paragraph of the target article once per game.</span>
+        </span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="button-container">
+    <button id="share-start" data-token="{{ token }}">Start Game</button>
+  </div>
+</div>
+{% endblock %}
