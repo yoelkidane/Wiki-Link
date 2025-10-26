@@ -21,16 +21,21 @@
     gap: 10px;
 }
 
-#home-link {
-    background-color: #eee;
-    border: 1px solid #ccc;
+
+#giveup-link {
+    background-color: #ffdddd;
+    border: 1px solid #ff4d4d;
+    color: #b30000;
     padding: 5px 10px;
     cursor: pointer;
     border-radius: 3px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
 }
 
-#home-link:hover {
-    background-color: #ddd;
+#giveup-link:hover {
+    background-color: #ffb3b3;
+    color: #800000;
 }
 
 .nav-center {

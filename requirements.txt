@@ -4,7 +4,6 @@ certifi==2024.8.30
 charset-normalizer==3.4.0
 click==8.1.7
 colorama==0.4.6
-dotenv==0.9.9
 Flask==3.0.3
 gunicorn==23.0.0
 idna==3.10

@@ -1,11 +1,10 @@
-import os, time, random, base64, json
-from functools import lru_cache, wraps
+import os, time, random, json, sqlite3, secrets
 from urllib.parse import urlparse, parse_qs
 
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from flask import Flask, render_template, session, jsonify, redirect, url_for, request
+from flask import Flask, render_template, session, jsonify, redirect, url_for, request, g
 
 
 load_dotenv()
@@ -21,21 +20,42 @@ app.config.update(
 
 WIKI_API_RANDOM = "https://en.wikipedia.org/api/rest_v1/page/random/summary"
 WIKI_API_HTML = "https://en.wikipedia.org/api/rest_v1/page/html/{}"
+DEFAULT_REQ_TIMEOUT = 5
 
 with open("easy_articles.json", "r", encoding="utf-8") as f:
-        EASY_ARTICLES = json.load(f)
+    EASY_ARTICLES = json.load(f)
 
+# SQLite setup for shared games
+DATABASE = os.path.join(os.path.dirname(__file__), "shared_challenges.db")
 
-@lru_cache(maxsize=256)
-def fetch_html_cached(title):
-    headers = HEADERS
-    r = requests.get(WIKI_API_HTML.format(title), headers=headers, timeout=5)
-    return r.text if r.status_code == 200 else None
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
 
+def init_db():
+    db = sqlite3.connect(DATABASE)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS challenges (
+            token TEXT PRIMARY KEY,
+            payload TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    db.commit()
+    db.close()
+
+init_db() # ensure DB is initialized
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 
 #  Helpers 
-
 def get_random_article():
     """Fetch a random Wikipedia article title + summary."""
     headers = HEADERS
@@ -137,6 +157,23 @@ def get_article_html(title):
         else:
             a["href"] = "$%#@!"
 
+    # Remove maintenance/notice boxes (e.g., "more citations needed", warnings)
+    def _is_notice_class(cls):
+        if not cls:
+            return False
+        if isinstance(cls, list):
+            combined = " ".join(cls)
+        else:
+            combined = str(cls)
+        tokens = ["ambox", "mbox", "metadata", "box-", "ambox-content", "ambox-Refimprove"]
+        return any(t in combined for t in tokens)
+
+    for el in soup.find_all(["table", "div"], class_=_is_notice_class):
+        try:
+            el.decompose()
+        except Exception:
+            pass
+
     # Table of contents building
     toc = []
     for h2 in soup.find_all("h2"):
@@ -148,20 +185,6 @@ def get_article_html(title):
     return str(soup), toc
 
 
-def decode_state(encoded):
-    """Decode base64 back into (start_title, end_title, and set of rules."""
-    payload = base64.urlsafe_b64decode(encoded.encode()).decode()
-    data = json.loads(payload)
-    return (
-        data["start"],
-        data["end"],
-        data.get("back_rule", "unlimited"),
-        data.get("toc", "off"),
-        data.get("difficulty", "hard"),
-        data.get("peek_rule", "on")
-    )
-
-
 def get_article_summary(title):
     """Fetch summary for a given Wikipedia article."""
     headers = HEADERS
@@ -169,7 +192,7 @@ def get_article_summary(title):
         r = requests.get(
             f"https://en.wikipedia.org/api/rest_v1/page/summary/{title}",
             headers=headers,
-            timeout=5
+            timeout=DEFAULT_REQ_TIMEOUT
         )
         if r.status_code == 200:
             data = r.json()
@@ -178,9 +201,34 @@ def get_article_summary(title):
         pass
     return ""
 
+# Allows for redirects to canonical titles (so that the end page is always correct)
+def resolve_canonical_title(title):
+    """Resolve canonical title of a Wikipedia article (handles redirect targets)."""
+    headers = HEADERS
+    r = requests.get(
+        f"https://en.wikipedia.org/api/rest_v1/page/summary/{title}",
+        headers=headers,
+        timeout=DEFAULT_REQ_TIMEOUT
+    )
+    if r.status_code == 200:
+        data = r.json()
+        return data.get("title", title).replace(" ", "_")
+    return title
+
+# Share link (short token + SQLite)
+def save_challenge_to_db(token, payload):
+    db = get_db()
+    db.execute("INSERT OR REPLACE INTO challenges (token, payload) VALUES (?, ?)", (token, payload))
+    db.commit()
+
+def get_challenge_from_db(token):
+    db = get_db()
+    cur = db.execute("SELECT payload FROM challenges WHERE token = ?", (token,))
+    row = cur.fetchone()
+    return row[0] if row else None
+
 
 #  Routes
-
 @app.route("/")
 def home():
     session.clear()
@@ -209,7 +257,7 @@ def challenge():
             end = get_random_article()
 
     session["start_page"] = start["title"]
-    session["end_page"] = end["title"]
+    session["end_page"] = resolve_canonical_title(end["title"])
     session["end_summary"] = end["summary"]
 
 
@@ -383,12 +431,8 @@ def state():
         "peek_rule": peek_rule
     })
 
-
-# Share link (base64)
-
 @app.route('/api/challenge/share')
 def generate_share_challenge():
-
     difficulty = request.args.get("difficulty", "hard")
 
     if difficulty == "easy":
@@ -402,11 +446,9 @@ def generate_share_challenge():
         while end["title"] == start["title"]:
             end = get_random_article()
 
-    # Get rules from query params (from the home page)
     back_rule = request.args.get("back_rule", "unlimited")
     toc = request.args.get("toc", "off")
     peek_rule = request.args.get("peek_rule", "on")
-
 
     payload = json.dumps({
         "start": start["title"],
@@ -416,39 +458,57 @@ def generate_share_challenge():
         "difficulty": difficulty,
         "peek_rule": peek_rule
     })
-    token = base64.urlsafe_b64encode(payload.encode()).decode()
+    # Generate short token
+    token = secrets.token_urlsafe(6)
+    save_challenge_to_db(token, payload)
 
     link = url_for('friend_index', token=token, _external=True)
     return jsonify({"start": start, "end": end, "link": link, "token": token})
 
 
+
 @app.route('/share/<token>')
 def friend_index(token):
     """Landing page for a shared game link. Decodes the token and shows start/end articles."""
+    payload = get_challenge_from_db(token)
+    if not payload:
+        return "Invalid or expired link", 400
     try:
-        payload = base64.urlsafe_b64decode(token.encode()).decode()
         data = json.loads(payload)
         start = data["start"]
         end = data["end"]
-        back_rule = data.get("back_rule", "unlimited") 
-        toc = data.get("toc", "off") 
-        difficulty = data.get("difficulty", "hard")  
+        back_rule = data.get("back_rule", "unlimited")
+        toc = data.get("toc", "off")
+        difficulty = data.get("difficulty", "hard")
         peek_rule = data.get("peek_rule", "on")
     except Exception:
-        return "Invalid or corrupted link", 400
+        return "Corrupted challenge data", 400
+    return render_template("friend_index.html", start=start, end=end, token=token, 
+                           back_rule=back_rule, toc=toc, difficulty=difficulty, peek_rule=peek_rule)
 
-    # Pass token and rules to template
-    return render_template("friend_index.html", start=start, end=end, token=token, back_rule=back_rule, toc=toc, difficulty=difficulty, peek_rule=peek_rule)
 
 
 @app.route("/share/<token>/start")
 def share_start(token):
     """Start a shared game for a visitor who opened a /share/<token> link."""
-    start, end, back_rule, toc, difficulty, peek_rule = decode_state(token)
+    payload = get_challenge_from_db(token)
+    if not payload:
+        return "Invalid or expired link", 400
+    try:
+        data = json.loads(payload)
+        start = data["start"]
+        end = data["end"]
+        back_rule = data.get("back_rule", "unlimited")
+        toc = data.get("toc", "off")
+        difficulty = data.get("difficulty", "hard")
+        peek_rule = data.get("peek_rule", "on")
+    except Exception:
+        return "Corrupted challenge data", 400
 
     session['start_page'] = start
-    session['end_page'] = end
-    session['end_summary'] = get_article_summary(end)
+    canonical_end = resolve_canonical_title(end)
+    session['end_page'] = canonical_end
+    session['end_summary'] = get_article_summary(canonical_end)
     session['clicks'] = 0
     session['visited'] = []
     session['current_index'] = 0

@@ -1,8 +1,7 @@
 let startTime = null;
 let timerInterval = null;
 
-
-// Helpers 
+// Helper functions
 function updateBackButtonState(state) {
   const backBtn = document.getElementById("back-link");
   if (!backBtn) return;
@@ -44,6 +43,52 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
+// slows down function calls
+function rateLimit(fn, wait = 100) {
+  let t;
+  return (...args) => {
+    const ctx = this; 
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(ctx, args), wait);
+  };
+}
+
+// adjust figure/thumbnail widths to match the image's declared width (or natural width)
+function adjustFigures(root = document) {
+  try {
+    const figures = (root || document).querySelectorAll('figure.mw-default-size');
+    figures.forEach(fig => {
+      const img = fig.querySelector('img.mw-file-element');
+      if (!img) return;
+      // explicit width attribute set by wikipedia, otherwise naturalWidth
+      const attrW = img.getAttribute('width');
+      let targetW = attrW ? parseInt(attrW, 10) : (img.naturalWidth || null);
+      if (!targetW || isNaN(targetW)) {
+        // fallback: use displayed width
+        targetW = img.width || img.clientWidth || null;
+      }
+
+      if (targetW) {
+        // cap to container width (prevent thumbnail overflow)
+        const container = fig.parentElement || document.body;
+        const max = Math.floor(Math.min(container.clientWidth * 0.9, window.innerWidth * 0.9));
+        const finalW = Math.min(targetW, max);
+        fig.style.width = finalW + 'px';
+        // Make the image fill the figure box
+        img.style.width = '100%';
+        img.style.height = 'auto';
+      } else {
+        // ensure responsive fallback
+        fig.style.width = '';
+        img.style.width = '100%';
+        img.style.height = 'auto';
+      }
+    });
+  } catch (err) {
+    console.error('adjustFigures error', err);
+  }
+}
+
 
 //  Start game 
 document.getElementById("start-game")?.addEventListener("click", () => {
@@ -60,9 +105,10 @@ document.getElementById("start-game")?.addEventListener("click", () => {
     .catch(err => console.error("Failed to start game:", err));
 });
 
-document.getElementById("home-link")?.addEventListener("click", e => {
+
+document.getElementById("giveup-link")?.addEventListener("click", e => {
   e.preventDefault();
-  window.location.href = "/";
+  showResultModal(false); // false = not win
 });
 
 document.getElementById("back-link")?.addEventListener("click", e => {
@@ -136,6 +182,55 @@ if (summaryButton && summaryDropdown) {
 }
 
 
+// Show result modal (win or give up)
+function showResultModal(isWin) {
+  fetch("/api/state").then(r => r.json()).then(data => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    const titleEl = document.getElementById("result-title");
+    const articleEl = document.getElementById("result-article");
+    const clicksEl = document.getElementById("result-clicks");
+    const timeEl = document.getElementById("result-time");
+    const pathEl = document.getElementById("result-path");
+    const resultPopup = document.getElementById("result-popup");
+
+    if (isWin) {
+      // mark popup as win so CSS can style the final path item green
+      if (resultPopup) {
+        resultPopup.classList.add('is-win');
+        resultPopup.classList.remove('is-loss');
+      }
+      titleEl.textContent = "🎉 You Win!";
+      titleEl.classList.remove("better-luck");
+      articleEl.innerHTML = `Reached article: <a href="https://en.wikipedia.org/wiki/${data.end}" target="_blank" rel="noopener noreferrer">${data.end.replace(/_/g, " ")}</a>`;
+    } else {
+      if (resultPopup) {
+        resultPopup.classList.add('is-loss');
+        resultPopup.classList.remove('is-win');
+      }
+      titleEl.textContent = "😢 Better luck next time!";
+      titleEl.classList.add("better-luck");
+      articleEl.innerHTML = `Target article: <a href="https://en.wikipedia.org/wiki/${data.end}" target="_blank" rel="noopener noreferrer">${data.end.replace(/_/g, " ")}</a>`;
+    }
+    clicksEl.textContent = `Articles visited: ${data.clicks}`;
+    let totalSeconds = Math.floor(data.elapsed);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    timeEl.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+    if (pathEl) {
+      pathEl.innerHTML = "";
+      data.visited.forEach((title, idx) => {
+        const li = document.createElement("li");
+        li.textContent = `${idx + 1}. ${title.replace(/_/g, " ")}`;
+        pathEl.appendChild(li);
+      });
+    }
+    document.getElementById("result-popup").classList.remove("hidden");
+    document.getElementById("result-home").onclick = () => { window.location.href = "/"; };
+  });
+}
 
 // Fetch and update game state 
 async function updateState() {
@@ -147,41 +242,7 @@ async function updateState() {
   // Win pop up
   if (data.has_won && !window.hasAlerted) {
     window.hasAlerted = true;
-
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-
-    const articleEl = document.getElementById("win-article");
-    const clicksEl = document.getElementById("win-clicks");
-    const timeEl = document.getElementById("win-time");
-    const pathEl = document.getElementById("win-path");
-
-    const targetName = data.end.replace(/_/g, " ");
-    const wikiUrl = `https://en.wikipedia.org/wiki/${data.end}`;
-
-    articleEl.innerHTML = `Reached article: <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer">${targetName}</a>`;
-    clicksEl.textContent = `Articles visited: ${data.clicks}`;
-
-    let totalSeconds = Math.floor(data.elapsed);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    timeEl.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, "0")}`;
-
-    if (pathEl) {
-      pathEl.innerHTML = "";
-      data.visited.forEach((title, idx) => {
-        const li = document.createElement("li");
-        li.textContent = `${idx + 1}. ${title.replace(/_/g, " ")}`;
-        pathEl.appendChild(li);
-      });
-    }
-
-    document.getElementById("win-popup").classList.remove("hidden");
-    document.getElementById("win-home").addEventListener("click", () => {
-      window.location.href = "/";
-    });
+    showResultModal(true);
   }
 
   // Disable back button if needed
@@ -265,6 +326,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // adjust figures on initial load
+  adjustFigures(document.getElementById('wiki-content') || document);
+
+  // recalculate figure sizing on window resize (rateLimited)
+  window.addEventListener('resize', rateLimit(() => adjustFigures(document.getElementById('wiki-content') || document), 120));
+
   // rule persistence for home page
   document.querySelectorAll(".rule-group").forEach(group => {
     const groupName = group.dataset.rule;
@@ -306,6 +373,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const html = await res.text();
       peekContent.innerHTML = html;
 
+      // hide/disable page-level TOC toggle while modal is open by adding a class
+      const pageTocToggle = document.getElementById("toc-toggle-btn");
+      if (pageTocToggle) {
+        pageTocToggle.classList.add('peek-hidden');
+      }
+
+      // disable non-TOC links inside the peek content (keep TOC links active)
       peekContent.querySelectorAll("a").forEach(a => {
         if (!a.closest("#toc-sidebar")) {
           a.removeAttribute("href");
@@ -315,6 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
+      // Setup TOC links inside peek content
       peekContent.querySelectorAll("#toc-sidebar a").forEach(link => {
         link.addEventListener("click", e => {
           e.preventDefault();
@@ -323,6 +398,81 @@ document.addEventListener("DOMContentLoaded", () => {
           if (targetEl) targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
         });
       });
+
+      // if peek HTML included a TOC toggle button, convert it into a modal-local control
+      const injectedTocToggle = peekContent.querySelector('.toc-toggle-btn, #toc-toggle-btn');
+      let modalTocToggle = null;
+      const modalTocSidebar = peekContent.querySelector('#toc-sidebar');
+      if (injectedTocToggle) {
+        // Ensure unique id for modal button and scope its behavior to modal's TOC
+        injectedTocToggle.id = 'peek-toc-toggle-btn';
+        modalTocToggle = injectedTocToggle;
+        // place the toggle inside the modal-content for correct positioning
+        const modalContentEl = modal.querySelector('.modal-content');
+        if (modalContentEl && !modalContentEl.contains(modalTocToggle)) {
+          modalContentEl.appendChild(modalTocToggle);
+        }
+
+        modalTocToggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!modalTocSidebar) return;
+          const isShown = modalTocSidebar.classList.toggle('show');
+          // Properly position the modal under TOC button
+          if (isShown) {
+            try {
+              const toggleRect = modalTocToggle.getBoundingClientRect();
+              const contentRect = modalContentEl.getBoundingClientRect();
+              // compute left relative to modal-content
+              const left = Math.max(8, toggleRect.left - contentRect.left);
+              const top = toggleRect.bottom - contentRect.top + 6; // small gap
+              modalTocSidebar.style.left = `${left}px`;
+              modalTocSidebar.style.top = `${top}px`;
+              modalTocSidebar.style.position = 'absolute';
+            } catch (err) {
+              // fallback: leave CSS defaults
+            }
+          } else {
+            // remove inline positioning to fall back to CSS
+            modalTocSidebar.style.left = '';
+            modalTocSidebar.style.top = '';
+          }
+        });
+      }
+
+      // fallback: if no injected toggle exists but a modal TOC exists, create a small modal-local toggle
+      if (!modalTocToggle && modalTocSidebar) {
+        modalTocToggle = document.createElement('button');
+        modalTocToggle.className = 'toc-toggle-btn';
+        modalTocToggle.id = 'peek-toc-toggle-btn';
+        modalTocToggle.textContent = '☰ TOC';
+        const modalContentEl = modal.querySelector('.modal-content') || modal;
+        modalContentEl.appendChild(modalTocToggle);
+        modalTocToggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!modalTocSidebar) return;
+          const isShown = modalTocSidebar.classList.toggle('show');
+          const modalContentEl = modal.querySelector('.modal-content') || modal;
+          if (isShown) {
+            try {
+              const toggleRect = modalTocToggle.getBoundingClientRect();
+              const contentRect = modalContentEl.getBoundingClientRect();
+              const left = Math.max(8, toggleRect.left - contentRect.left);
+              const top = toggleRect.bottom - contentRect.top + 6;
+              modalTocSidebar.style.left = `${left}px`;
+              modalTocSidebar.style.top = `${top}px`;
+              modalTocSidebar.style.position = 'absolute';
+            } catch (err) {}
+          } else {
+            modalTocSidebar.style.left = '';
+            modalTocSidebar.style.top = '';
+          }
+        });
+      }
+
+      // Ensure modal TOC respects the mobile show class
+      if (modalTocSidebar && !modalTocSidebar.classList.contains('show')) {
+        // keep it hidden initially on small screens; user can toggle
+      }
 
       modal.style.display = "block";
       document.body.style.overflow = "hidden";
@@ -334,25 +484,54 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  closeBtn?.addEventListener("click", () => {
-    modal.style.display = "none";
-    peekContent.innerHTML = "";
-    document.body.style.overflow = "";
-  });
+  // centralized modal cleanup and close helper.
+  // click and keyboard escape for cleanup.
+  function closePeekModal() {
+    try {
+      if (!modal || modal.style.display === "none") return; // already closed
 
-  window.addEventListener("click", e => {
-    if (e.target === modal) {
       modal.style.display = "none";
       peekContent.innerHTML = "";
       document.body.style.overflow = "";
+
+      // restore page-level TOC toggle visibility
+      const pageTocToggle = document.getElementById("toc-toggle-btn");
+      if (pageTocToggle) pageTocToggle.classList.remove('peek-hidden');
+
+      // remove any modal-local toggle we added
+      const modalToggle = document.getElementById('peek-toc-toggle-btn');
+      if (modalToggle && modalToggle.parentElement) modalToggle.parentElement.removeChild(modalToggle);
+
+      // ensure modal TOC (if present) is hidden and inline positioning cleared
+      const modalToc = document.querySelector('#peekModal #toc-sidebar');
+      if (modalToc) {
+        modalToc.classList.remove('show');
+        modalToc.style.left = '';
+        modalToc.style.top = '';
+        modalToc.style.position = '';
+      }
+
+      // return focus to peek button for accessibility
+      const peekBtnEl = document.getElementById('peek-btn');
+      if (peekBtnEl) peekBtnEl.focus();
+    } catch (err) {
+      console.error('closePeekModal error', err);
+    }
+  }
+
+  // wire close handlers to the single helper
+  closeBtn?.addEventListener('click', closePeekModal);
+  window.addEventListener('click', e => { if (e.target === modal) closePeekModal(); });
+  // allow escape to close the modal
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'Escape' || e.key === 'Esc') && modal && modal.style.display === 'block') {
+      closePeekModal();
     }
   });
 });
 
 
-
 // Global warnings
- 
 // Block invalid Wikipedia links
 document.addEventListener("click", e => {
   const link = e.target.closest("a");
@@ -363,7 +542,7 @@ document.addEventListener("click", e => {
 
   if (fullUrl.href.includes("$%#@!")) {
     e.preventDefault();
-    showToast("⚠️ That’s not a valid Wikipedia article!");
+    showToast("⚠️ That’s not a valid Wikipedia article");
     return false;
   }
 });
@@ -372,6 +551,30 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
     e.preventDefault();
-    showToast("🚫 Searching is disabled for this game!");
+    showToast("🚫 Searching is disabled for this game");
   }
 });
+
+// Universal TOC sidebar toggle
+document.addEventListener("DOMContentLoaded", () => {
+  const tocSidebar = document.getElementById("toc-sidebar");
+  const tocToggleBtn = document.getElementById("toc-toggle-btn");
+
+  if (tocSidebar && tocToggleBtn) {
+    tocToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      tocSidebar.classList.toggle("show");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (
+        tocSidebar.classList.contains("show") &&
+        !tocSidebar.contains(e.target) &&
+        e.target !== tocToggleBtn
+      ) {
+        tocSidebar.classList.remove("show");
+      }
+    });
+  }
+});
+

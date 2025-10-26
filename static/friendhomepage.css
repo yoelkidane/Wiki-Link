@@ -163,6 +163,32 @@ p {
   transform: translateY(0);
 }
 
+.home-button {
+  display: inline-block;
+  margin-left: 12px;
+  text-decoration: none;
+}
+
+.home-button button {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.05rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.home-button button:hover {
+  background-color: #1565c0;
+  transform: translateY(-2px);
+}
+
+.home-button button:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 500px) {
   h1 {
     font-size: 2rem;

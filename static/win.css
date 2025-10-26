@@ -1,10 +1,7 @@
 .win-popup {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); 
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,102 +12,104 @@
   display: none;
 }
 
-.win-title {
-  font-family: 'Arial', sans-serif;
-}
-
 .win-popup-content {
   background-color: #ffffff;
-  padding: 5px;
+  padding: 18px 20px;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   width: 600px;
-  height: 550px;          
+  max-width: calc(100% - 40px);
+  max-height: 80vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  gap: 12px;
   text-align: center;
   font-family: 'Arial', sans-serif;
   color: #333;
-  animation: pop-in 0.3s ease-out;
+  animation: pop-in 0.24s ease-out;
 }
 
 @keyframes pop-in {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.96); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
 }
 
 .win-popup-content h2 {
-  font-size: 1.8em;
-  margin-bottom: 20px;
+  font-size: 1.6rem;
+  margin: 15px 0 0 0;
   color: #00b63d;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .win-popup-content p {
-  font-size: 1.1em;
-  margin: 8px 0;
+  font-size: 1rem;
+  margin: 0;
   line-height: 1.4;
 }
 
-#win-home {
+#result-title.better-luck {
+  color: #333;
+}
+
+#result-home {
   background-color: #007bff;
   color: white;
   border: none;
   padding: 10px 22px;
-  font-size: 1em;
+  font-size: 1rem;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 20px;
-  transition: background-color 0.2s ease;
+  margin-top: 6px;
+  transition: background-color 0.15s ease;
 }
 
-#win-home:hover {
+#result-home:hover {
   background-color: #0056b3;
 }
 
-
 .win-path-list {
   list-style: none;
-  padding: 0 10px;
-  margin: 10px 0 15px 0;
-  max-height: 100px; 
-  width: 90%;
+  padding: 6px 8px;
+  margin: 8px 0 0 0;
+  max-height: 200px;
+  width: 100%;
   overflow-y: auto;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-  text-align: left;
   background-color: #fafafa;
+  border: 1px solid #eee;
   border-radius: 6px;
+  box-sizing: border-box;
 }
 
 .win-path-list li {
-  padding: 4px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid #eee;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: #444;
 }
 
 .win-path-list li:last-child {
-  font-weight: bold;
-  color: #4caf50; 
+  border-bottom: none;
 }
 
 .win-path-list li:first-child {
-  font-weight: bold;
-  color: #2196f3; 
+  font-weight: 700;
+  color: #2196f3;
 }
 
-.win-path-list::-webkit-scrollbar {
-  width: 6px;
+
+.win-popup.is-win .win-path-list li:last-child {
+  color: #4caf50;
+  font-weight: 700;
 }
 
-.win-path-list::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
-  border-radius: 3px;
-}
+/* scrollbar styling */
+.win-path-list::-webkit-scrollbar { width: 8px; }
+.win-path-list::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.12); border-radius: 4px; }
+.win-path-list::-webkit-scrollbar-track { background-color: rgba(0,0,0,0.02); }
 
-.win-path-list::-webkit-scrollbar-track {
-  background-color: rgba(0,0,0,0.05);
+/* small screens: reduce modal size */
+@media (max-width: 480px) {
+  .win-popup-content { width: calc(100% - 24px); padding: 12px; }
+  .win-path-list { max-height: 160px; }
 }

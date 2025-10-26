@@ -15,7 +15,7 @@
 {% if not peek_mode %}
 <nav id="navbar">
   <div class="nav-left">
-    <button id="home-link">Home</button>
+    <button id="giveup-link">Give Up?</button>
   </div>
 
   <div class="nav-center">
@@ -48,6 +48,7 @@
       {% endfor %}
     </ul>
   </aside>
+  <button id="toc-toggle-btn" class="toc-toggle-btn">☰ TOC</button>
   {% endif %}
 
   <div id="wiki-content">{{ content | safe }}</div>
@@ -58,16 +59,16 @@
   </script>
 </div>
 
-<!-- Win Popup -->
-<div id="win-popup" class="win-popup hidden">
+<!-- Win/Give Up Popup -->
+<div id="result-popup" class="win-popup hidden">
   <div class="win-popup-content">
-    <h2 class="win-title">🎉 You Win!</h2>
-    <p id="win-article"></p>
-    <p id="win-clicks"></p>
-    <p id="win-time"></p>
+    <h2 class="win-title" id="result-title">🎉 You Win!</h2>
+    <p id="result-article"></p>
+    <p id="result-clicks"></p>
+    <p id="result-time"></p>
     <h3>Your Path:</h3>
-    <ul id="win-path" class="win-path-list"></ul>
-    <button id="win-home">Go Home</button>
+    <ul id="result-path" class="win-path-list"></ul>
+    <button id="result-home">Go Home</button>
   </div>
 </div>
 
