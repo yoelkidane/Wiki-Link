@@ -227,6 +227,11 @@ def get_challenge_from_db(token):
     row = cur.fetchone()
     return row[0] if row else None
 
+@app.route("/api/challenge/<token>/exists")
+def challenge_exists(token):
+    payload = get_challenge_from_db(token)
+    return jsonify({"exists": bool(payload)})
+
 
 #  Routes
 @app.route("/")

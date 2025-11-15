@@ -12,14 +12,12 @@
     <h3 class="main-subtitle">A Wikipedia Navigation Challenge</h3>
     <p class="subtitle">Start at one article, reach another, using only the links within Wikipedia. How direct can your path be?</p>
 
-    <!-- Brief explanation -->
-    <div class="game-description">
-      <p>Pick some rules to customize your challenge! Hover over the <strong>?</strong> icons for more info.</p>
-    </div>
-
     <!-- Rules Section -->
     <div class="rules-box">
       <h3>Rules</h3>
+      <p class="rules-subtitle">
+        Pick some rules to customize your challenge! Hover over the <strong>?</strong> icons for more info.
+      </p>
       <ul>
         <li>
           Back Button:
@@ -65,28 +63,61 @@
           <span class="tooltip">?
             <span class="tooltiptext">Unsure of what the target article is?<br>Click peek to view the article while playing.</span>
           </span>
+        </li>
       </ul>
     </div>
 
     <div class="button-container">
       <button id="start-game">Start Game</button>
-      <button id="share-link">Generate Share Link</button>
+      <button id="share-link">Invite Friends</button>
+    </div>
+
+    <div class="join-game-card">
+      <h2>
+        <span class="emoji-icon">🔑</span>
+        Join a Friend’s Game
+      </h2>
+      <p>Already have a game code? Enter it here to jump in.</p>
+      <form id="join-game-form">
+        <input
+          type="text"
+          id="join-game-code"
+          name="code"
+          placeholder="Enter game code"
+          autocomplete="off"
+          maxlength="20"
+          required
+        >
+        <button type="submit">Join Game</button>
+      </form>
+      <p id="join-game-error" class="join-error hidden">Game not found. Double-check the code.</p>
     </div>
 
     <!-- Share Modal -->
     <div id="share-popup" class="modal hidden">
       <div class="modal-content">
-        <h2>🔗 Share this Game</h2>
-        <p>Send this link to a friend so they can view the rules and start the game themselves.</p>
+        <h2>
+          <span class="emoji-icon">🔗</span>
+          Share this Game
+        </h2>
+        <p>Copy either the game code or link and send to a friend so they can play the same challenge!</p>
       
-        <span id="copy-confirmation" class="copy-confirmation hidden">✅ Link copied!</span>
+        <!-- Game code display (click anywhere in this box to copy just the code) -->
+        <div class="share-link-display" id="share-link-click-area">
+          <input id="share-full-link" type="text" readonly>
+          <span class="share-link-icon" aria-hidden="true">📋</span>
+        </div>
       
         <div class="share-actions">
-          <button id="copy-link">Copy Again</button>
+          <!-- This button keeps its original behavior: copy FULL link -->
+          <button id="copy-link">Copy Link</button>
         </div>
       
         <button id="share-start" data-token="">Start Game</button>
-        <button class="close-share" onclick="document.getElementById('share-popup').classList.add('hidden')">Close</button>
+        <button class="close-share"
+                onclick="document.getElementById('share-popup').classList.add('hidden')">
+          Close
+        </button>
       </div>
     </div>
   </div>

@@ -133,6 +133,7 @@ document.getElementById("share-link")?.addEventListener("click", async () => {
   const shareUrl = `${window.location.origin}/share/${token}`;
   document.getElementById("share-popup").classList.remove("hidden");
   document.getElementById("share-start").dataset.token = token;
+  document.getElementById("share-full-link").value = token;
 
   try {
     await navigator.clipboard.writeText(shareUrl);
@@ -578,3 +579,84 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+document.getElementById("join-game-form")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const input = document.getElementById("join-game-code");
+  const errorEl = document.getElementById("join-game-error");
+  if (!input) return;
+
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const code = raw.replace(/\s+/g, "");
+
+  try {
+    const res = await fetch(`/api/challenge/${encodeURIComponent(code)}/exists`);
+    const data = await res.json();
+    if (data.exists) {
+      window.location.href = `/share/${encodeURIComponent(code)}`;
+    } else {
+      errorEl?.classList.remove("hidden");
+    }
+  } catch (err) {
+    console.error("Error checking game code:", err);
+    errorEl?.classList.remove("hidden");
+  }
+});
+
+// logic for share link copy functionality
+document.addEventListener("DOMContentLoaded", () => {
+  const shareClickArea = document.getElementById("share-link-click-area");
+  const shareInput = document.getElementById("share-full-link");
+  const copyButton = document.getElementById("copy-link");
+
+  if (!shareClickArea || !shareInput) return;
+
+  let revertTimeout = null;
+
+  shareClickArea.addEventListener("click", async (event) => {
+    event.preventDefault();
+
+    const code = (shareInput.value || "").trim();
+    if (!code) return;
+
+    // copy to clipboard
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        shareInput.select();
+        document.execCommand("copy");
+        window.getSelection().removeAllRanges();
+      }
+    } catch (err) {
+      console.error("copy code error:", err);
+    }
+
+    const originalValue = shareInput.value;
+    shareInput.value = "Code copied!";
+    shareInput.classList.add("copied-highlight");
+
+    clearTimeout(revertTimeout);
+    revertTimeout = setTimeout(() => {
+      shareInput.value = originalValue;
+      shareInput.classList.remove("copied-highlight");
+    }, 1200);
+  });
+
+  if (copyButton) {
+    copyButton.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      const originalText = copyButton.textContent;
+      copyButton.textContent = "Link copied!";
+      copyButton.classList.add("copied-highlight");
+
+      clearTimeout(copyButton._timeout);
+      copyButton._timeout = setTimeout(() => {
+        copyButton.textContent = originalText;
+        copyButton.classList.remove("copied-highlight");
+      }, 1200);
+    });
+  }
+});
