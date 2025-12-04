@@ -157,22 +157,6 @@ def get_article_html(title):
         else:
             a["href"] = "$%#@!"
 
-    # Remove maintenance/notice boxes (e.g., "more citations needed", warnings)
-    def _is_notice_class(cls):
-        if not cls:
-            return False
-        if isinstance(cls, list):
-            combined = " ".join(cls)
-        else:
-            combined = str(cls)
-        tokens = ["ambox", "mbox", "metadata", "box-", "ambox-content", "ambox-Refimprove"]
-        return any(t in combined for t in tokens)
-
-    for el in soup.find_all(["table", "div"], class_=_is_notice_class):
-        try:
-            el.decompose()
-        except Exception:
-            pass
 
     # Table of contents building
     toc = []

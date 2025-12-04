@@ -149,23 +149,32 @@ tr:nth-child(even) {
 }
 
 /* figure / thumbnail + caption */
+/* Apply to all figures, not just mw-default-size */
+figure,
 figure.mw-default-size {
     display: inline-block;
     vertical-align: top;
+
+    /* Let figure shrink to contents, but not overflow */
+    width: auto;
+    max-width: 100%;
+
     margin: 0 1em 1em 0;
     padding: 6px;
     background: #f8f9fa;
     border: 1px solid #a2a9b1;
     box-sizing: border-box;
-    max-width: 100%;
 }
 
+/* IMPORTANT: respect intrinsic image width, just cap it */
+figure img,
 figure.mw-default-size img.mw-file-element {
     display: block;
-    width: 100%;
+    max-width: 100%;
     height: auto;
 }
 
+figure figcaption,
 figure.mw-default-size figcaption {
     display: block;
     margin-top: 6px;
@@ -218,6 +227,7 @@ figure.mw-default-size figcaption {
 }
 
 @media (min-width: 900px) {
+    figure,
     figure.mw-default-size {
         float: right;
         margin-left: 1em;
